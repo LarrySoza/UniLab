@@ -8,11 +8,15 @@ import com.gaspersoft.unilab.domain.model.OperationResult
 import com.gaspersoft.unilab.domain.model.OperationResult.Failure
 import com.gaspersoft.unilab.domain.model.OperationResult.Success
 import com.gaspersoft.unilab.domain.model.ResistanceCalculation
+import com.gaspersoft.unilab.domain.model.ResistorBandColor
+import com.gaspersoft.unilab.domain.model.ResistorBandCount
+import com.gaspersoft.unilab.domain.model.ResistorColorCalculation
 import com.gaspersoft.unilab.domain.model.ResistanceInput
 import com.gaspersoft.unilab.domain.model.ResistanceUnit
 import com.gaspersoft.unilab.domain.model.UnitOption
 import com.gaspersoft.unilab.utils.formatNumber
 import kotlin.math.abs
+import kotlin.math.pow
 
 fun calculateOhmsLaw(
     target: OhmsLawTarget,
@@ -298,6 +302,71 @@ fun convertPower(
     fromUnit = fromUnit,
     toUnit = toUnit,
 )
+
+fun calculateResistorColorCode(
+    bandCount: ResistorBandCount,
+    colors: List<ResistorBandColor>,
+): OperationResult<ResistorColorCalculation> {
+    if (colors.size != bandCount.totalBands) {
+        return Failure("Selecciona un color para cada banda.")
+    }
+
+    val digitCount = when (bandCount) {
+        ResistorBandCount.FOUR -> 2
+        ResistorBandCount.FIVE -> 3
+    }
+
+    val significantColors = colors.take(digitCount)
+    significantColors.forEachIndexed { index, color ->
+        if (color.digit == null) {
+            return Failure("El color ${color.label.lowercase()} no es válido para la banda ${index + 1}.")
+        }
+    }
+
+    val multiplierColor = colors[digitCount]
+    if (multiplierColor.multiplierExponent == null) {
+        return Failure("El color ${multiplierColor.label.lowercase()} no es válido como multiplicador.")
+    }
+
+    val toleranceColor = colors.last()
+    if (toleranceColor.tolerancePercent == null) {
+        return Failure("El color ${toleranceColor.label.lowercase()} no es válido como tolerancia.")
+    }
+
+    val significantValue = significantColors.fold(0) { accumulator, color ->
+        accumulator * 10 + (color.digit ?: 0)
+    }
+    val multiplierValue = 10.0.pow(multiplierColor.multiplierExponent.toDouble())
+    val totalOhms = significantValue * multiplierValue
+    val displayUnit = selectResistanceUnit(totalOhms)
+    val displayValue = totalOhms / displayUnit.factorToOhms
+    val tolerancePercent = toleranceColor.tolerancePercent
+
+    return Success(
+        ResistorColorCalculation(
+            totalOhms = totalOhms,
+            displayValue = displayValue,
+            displayUnit = displayUnit,
+            tolerancePercent = tolerancePercent,
+            alternateDisplay = if (displayUnit == ResistanceUnit.OHM) {
+                buildResistanceAlternateDisplay(totalOhms)
+            } else {
+                "${formatNumber(totalOhms)} Ω"
+            },
+            steps = buildList {
+                add("Bandas = ${colors.joinToString(" - ") { it.label }}")
+                add("Cifras significativas = ${significantColors.joinToString("") { "${it.digit}" }}")
+                add("Multiplicador = 10^${multiplierColor.multiplierExponent}")
+                add("R = ${significantValue} × 10^${multiplierColor.multiplierExponent}")
+                add("R = ${formatNumber(totalOhms)} Ω")
+                if (displayUnit != ResistanceUnit.OHM) {
+                    add("R = ${formatNumber(displayValue)} ${displayUnit.symbol}")
+                }
+                add("Tolerancia = ±${formatNumber(tolerancePercent)} %")
+            },
+        ),
+    )
+}
 
 private fun convertMeasurement(
     type: ConverterType,

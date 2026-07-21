@@ -52,3 +52,12 @@ data class ConversionCalculation(
     val resultUnit: String,
     val steps: List<String>,
 )
+
+data class ResistorColorCalculation(
+    val totalOhms: Double,
+    val displayValue: Double,
+    val displayUnit: ResistanceUnit,
+    val tolerancePercent: Double,
+    val alternateDisplay: String?,
+    val steps: List<String>,
+)

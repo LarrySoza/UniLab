@@ -15,6 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.gaspersoft.unilab.domain.model.siPrefixes
 import com.gaspersoft.unilab.ui.components.ConverterPanel
+import com.gaspersoft.unilab.ui.components.ResistorColorCodePanel
 import com.gaspersoft.unilab.ui.components.ScreenContainer
 import com.gaspersoft.unilab.ui.components.SectionHeadline
 
@@ -62,6 +63,7 @@ fun ToolsScreen(
                 }
             }
         }
+        ResistorColorCodePanel()
         ConverterPanel(
             title = "Conversión rápida",
             description = "Utiliza el mismo motor de conversión para verificar unidades durante clase o laboratorio.",

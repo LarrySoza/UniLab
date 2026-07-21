@@ -39,6 +39,7 @@ La primera version de UniLab busca ofrecer una base funcional, clara y escalable
 
 ### Herramientas
 - Tabla de **prefijos SI**
+- Utilidad de **codigo de colores de resistencias**
 - Panel de **conversion rapida**
 
 ## Tecnologias utilizadas

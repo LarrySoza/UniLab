@@ -2,10 +2,13 @@ package com.gaspersoft.unilab
 
 import com.gaspersoft.unilab.domain.calculator.calculateOhmsLaw
 import com.gaspersoft.unilab.domain.calculator.calculateParallelResistance
+import com.gaspersoft.unilab.domain.calculator.calculateResistorColorCode
 import com.gaspersoft.unilab.domain.calculator.calculateSeriesResistance
 import com.gaspersoft.unilab.domain.calculator.convertVoltage
 import com.gaspersoft.unilab.domain.model.OhmsLawTarget
 import com.gaspersoft.unilab.domain.model.OperationResult
+import com.gaspersoft.unilab.domain.model.ResistorBandColor
+import com.gaspersoft.unilab.domain.model.ResistorBandCount
 import com.gaspersoft.unilab.domain.model.ResistanceInput
 import com.gaspersoft.unilab.domain.model.ResistanceUnit
 import com.gaspersoft.unilab.domain.model.UnitOption
@@ -98,6 +101,58 @@ class ExampleUnitTest {
             listOf(
                 ResistanceInput("100", ResistanceUnit.OHM),
                 ResistanceInput("0", ResistanceUnit.OHM),
+            ),
+        )
+
+        assertTrue(result is OperationResult.Failure)
+    }
+
+    @Test
+    fun decodeFourBandResistor() {
+        val result = calculateResistorColorCode(
+            bandCount = ResistorBandCount.FOUR,
+            colors = listOf(
+                ResistorBandColor.BROWN,
+                ResistorBandColor.BLACK,
+                ResistorBandColor.RED,
+                ResistorBandColor.GOLD,
+            ),
+        )
+
+        assertTrue(result is OperationResult.Success)
+        val calculation = (result as OperationResult.Success).data
+        assertEquals(1000.0, calculation.totalOhms, 0.000001)
+        assertEquals(5.0, calculation.tolerancePercent, 0.000001)
+    }
+
+    @Test
+    fun decodeFiveBandResistor() {
+        val result = calculateResistorColorCode(
+            bandCount = ResistorBandCount.FIVE,
+            colors = listOf(
+                ResistorBandColor.BROWN,
+                ResistorBandColor.BLACK,
+                ResistorBandColor.BLACK,
+                ResistorBandColor.RED,
+                ResistorBandColor.BROWN,
+            ),
+        )
+
+        assertTrue(result is OperationResult.Success)
+        val calculation = (result as OperationResult.Success).data
+        assertEquals(10000.0, calculation.totalOhms, 0.000001)
+        assertEquals(1.0, calculation.tolerancePercent, 0.000001)
+    }
+
+    @Test
+    fun rejectInvalidToleranceColor() {
+        val result = calculateResistorColorCode(
+            bandCount = ResistorBandCount.FOUR,
+            colors = listOf(
+                ResistorBandColor.BROWN,
+                ResistorBandColor.BLACK,
+                ResistorBandColor.RED,
+                ResistorBandColor.BLACK,
             ),
         )
 
